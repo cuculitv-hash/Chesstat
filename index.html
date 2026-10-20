@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0a0a15">
+<title>♟️ Chess Master Pro</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>♟️</text></svg>">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0a0a15;--bg2:#141428;--bg3:#1e1e38;
+  --accent:#e94560;--accent2:#ff6b8a;--gold:#ffd700;
+  --text:#eef;--text2:#8890a8;--border:#2a2a44;--radius:14px;
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+html,body{height:100%;overflow-x:hidden}
+body{background:radial-gradient(ellipse at top,#1a1a3e,var(--bg));color:var(--text);min-height:100vh;min-height:100dvh}
+.screen{display:none;min-height:100vh;min-height:100dvh;animation:fadeIn .3s ease}
+.screen.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ============ AUTH ============ */
+#auth-screen.active{display:grid;place-items:center;padding:calc(20px + var(--safe-top)) 20px calc(20px + var(--safe-bottom))}
+.auth-box{background:var(--bg2);padding:32px 24px;border-radius:22px;width:100%;max-width:420px;border:1px solid var(--border);box-shadow:0 20px 60px rgba(0,0,0,.6);animation:slideUp .4s ease}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.auth-box h1{text-align:center;margin-bottom:6px;font-size:clamp(28px,7vw,34px);background:linear-gradient(135deg,#e94560,#ff6b8a,#ffd700);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;background-size:200% 200%;animation:gradientMove 4s ease infinite}
+@keyframes gradientMove{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.auth-box .sub{text-align:center;color:var(--text2);margin-bottom:26px;font-size:13px}
+.tabs{display:flex;gap:6px;margin-bottom:20px;background:var(--bg);padding:4px;border-radius:12px}
+.tab{flex:1;padding:11px;background:transparent;border:none;color:var(--text2);border-radius:9px;cursor:pointer;font-weight:600;font-size:14px;transition:.2s;font-family:inherit}
+.tab.active{background:var(--accent);color:#fff;box-shadow:0 4px 15px rgba(233,69,96,.4)}
+.form{display:none;flex-direction:column;gap:12px}
+.form.active{display:flex;animation:fadeIn .3s ease}
+.form label{font-size:12px;color:var(--text2);font-weight:600;margin-bottom:-6px}
+.form input{padding:14px;background:var(--bg);border:1.5px solid var(--border);border-radius:11px;color:var(--text);font-size:16px;font-family:inherit;width:100%;transition:.15s}
+.form input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(233,69,96,.15)}
+.form .hint{font-size:11px;color:var(--text2);opacity:.7}
+.btn{padding:14px;background:linear-gradient(135deg,#e94560,#c7304d);color:#fff;border:none;border-radius:11px;cursor:pointer;font-weight:700;font-size:15px;font-family:inherit;transition:.15s;width:100%;box-shadow:0 4px 15px rgba(233,69,96,.3)}
+.btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(233,69,96,.5)}
+.btn:active{transform:scale(.97)}
+.btn-sm{padding:9px 14px;font-size:13px;width:auto}
+.btn-ghost{background:var(--bg3);box-shadow:none}
+.btn-ghost:hover{background:#2a2a48;box-shadow:none}
+.msg{font-size:13px;text-align:center;min-height:18px;color:#ff6b6b;animation:shake .3s ease}
+.msg.ok{color:#51cf66;animation:none}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+
+/* ============ TOPBAR ============ */
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:calc(12px + var(--safe-top)) 16px 12px;background:rgba(20,20,40,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);gap:10px;flex-wrap:wrap;position:sticky;top:0;z-index:10}
+.logo{font-size:17px;font-weight:700;color:#fff;white-space:nowrap}
+.chip{padding:6px 13px;background:var(--bg3);border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap}
+
+/* ============ LOBBY ============ */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;padding:18px;max-width:1280px;margin:0 auto}
+@media(max-width:600px){.grid{padding:12px;gap:12px}}
+.panel{background:var(--bg2);padding:20px;border-radius:var(--radius);border:1px solid var(--border);display:flex;flex-direction:column;gap:12px}
+.panel h3{color:var(--accent);font-size:15px;display:flex;align-items:center;gap:8px}
+
+/* ============ BOT LIST — 6 bots ============ */
+.bot{display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg3);border:1.5px solid var(--border);border-radius:11px;cursor:pointer;transition:.15s;color:var(--text);font-family:inherit;text-align:left;width:100%;position:relative;overflow:hidden}
+.bot::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--bot-color,var(--accent));transition:.2s}
+.bot:hover{border-color:var(--bot-color,var(--accent));transform:translateX(4px);box-shadow:0 4px 15px rgba(233,69,96,.15)}
+.bot:active{transform:scale(.98)}
+.bot .ava{width:44px;height:44px;border-radius:11px;display:grid;place-items:center;font-size:22px;flex-shrink:0;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.3);overflow:hidden;position:relative;background-size:cover;background-position:center}
+.bot .ava img{width:100%;height:100%;object-fit:cover;border-radius:11px}
+.bot .ava-txt{position:absolute;inset:0;display:grid;place-items:center;font-size:22px;text-shadow:0 2px 6px rgba(0,0,0,.9);background:linear-gradient(135deg,rgba(0,0,0,.4),rgba(0,0,0,.2));border-radius:11px}
+.bot .info{flex:1;min-width:0}
+.bot .name{font-weight:700;font-size:14px;margin-bottom:2px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bot .desc{font-size:11px;color:var(--text2);display:flex;align-items:center;gap:5px}
+.elo-badge{padding:2px 6px;background:rgba(233,69,96,.2);color:var(--accent2);border-radius:4px;font-weight:700;font-size:10px}
+.elo-badge.high{background:rgba(255,215,0,.2);color:var(--gold)}
+.elo-badge.mid{background:rgba(255,107,138,.2);color:#ff6b8a}
+
+.row{display:flex;gap:8px}
+.row input{flex:1;padding:11px;background:var(--bg);border:1.5px solid var(--border);border-radius:11px;color:var(--text);font-size:15px;font-family:inherit;text-transform:uppercase;text-align:center;letter-spacing:2px;font-weight:700;transition:.15s}
+.row input:focus{outline:none;border-color:var(--accent)}
+.row .btn{width:auto;padding:11px 20px}
+
+/* Theme swatches */
+.themes{display:grid;grid-template-columns:repeat(6,1fr);gap:7px}
+.swatch{aspect-ratio:1;border:2px solid var(--border);border-radius:9px;cursor:pointer;padding:0;transition:.15s;position:relative}
+.swatch:hover{transform:scale(1.08)}
+.swatch.active{border-color:var(--accent);box-shadow:0 0 0 3px rgba(233,69,96,.3)}
+
+/* Piece styles — 10 kiểu có preview khác nhau */
+.piece-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-top:6px}
+.piece-btn{aspect-ratio:1;background:var(--bg);border:2px solid var(--border);border-radius:9px;cursor:pointer;font-size:24px;display:grid;place-items:center;transition:.15s;padding:0;position:relative;overflow:hidden}
+.piece-btn:hover{transform:scale(1.06);border-color:var(--accent2)}
+.piece-btn.active{border-color:var(--accent);box-shadow:0 0 0 3px rgba(233,69,96,.3)}
+.piece-btn .lbl{position:absolute;bottom:1px;font-size:8px;color:var(--text2);font-family:sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.3px;background:rgba(0,0,0,.5);padding:0 3px;border-radius:3px}
+.piece-btn .pv{font-size:24px;line-height:1}
+
+/* ============ GAME ============ */
+.game{display:grid;grid-template-columns:1fr 320px;gap:20px;padding:20px;max-width:1200px;margin:0 auto;align-items:start}
+@media(max-width:900px){.game{grid-template-columns:1fr;padding:12px;gap:12px}}
+.board-wrap{display:flex;flex-direction:column;gap:12px;align-items:center;width:100%;position:relative}
+
+#status{padding:12px 16px;background:linear-gradient(135deg,var(--bg2),var(--bg3));border:1px solid var(--border);border-radius:12px;font-weight:600;color:var(--accent);text-align:center;width:100%;max-width:min(640px,92vw);min-height:46px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:14px;box-shadow:0 4px 20px rgba(0,0,0,.3);transition:.2s}
+
+#board{
+  display:grid;
+  grid-template-columns:repeat(8,1fr);
+  grid-template-rows:repeat(8,1fr);
+  width:min(640px,92vw);
+  aspect-ratio:1/1;
+  border-radius:12px;
+  overflow:hidden;
+  box-shadow:0 20px 60px rgba(0,0,0,.7),0 0 0 3px var(--bg3);
+  position:relative;
+  transition:box-shadow .3s;
+}
+
+/* Special bot board effects */
+#board.efeito-devil{box-shadow:0 20px 60px rgba(233,69,96,.5),0 0 40px rgba(233,69,96,.4),0 0 0 3px #8b0000;animation:evilPulse 2s ease infinite}
+@keyframes evilPulse{0%,100%{box-shadow:0 20px 60px rgba(233,69,96,.5),0 0 40px rgba(233,69,96,.4),0 0 0 3px #8b0000}50%{box-shadow:0 20px 60px rgba(255,7,58,.7),0 0 60px rgba(255,7,58,.6),0 0 0 3px #ff073a}}
+#board.efeito-cyborg{box-shadow:0 20px 60px rgba(0,229,255,.5),0 0 40px rgba(0,229,255,.4),0 0 0 3px #0088cc;animation:cyborgGlow 2.5s ease infinite}
+@keyframes cyborgGlow{0%,100%{box-shadow:0 20px 60px rgba(0,229,255,.5),0 0 40px rgba(0,229,255,.4),0 0 0 3px #0088cc}50%{box-shadow:0 20px 60px rgba(57,255,20,.6),0 0 50px rgba(57,255,20,.5),0 0 0 3px #39ff14}}
+
+.cell{
+  display:flex;align-items:center;justify-content:center;
+  aspect-ratio:1/1;
+  cursor:pointer;user-select:none;position:relative;
+  transition:filter .1s;
+  min-width:0;min-height:0;overflow:hidden;
+}
+.cell:hover{filter:brightness(1.1)}
+.cell.sel{box-shadow:inset 0 0 0 4px var(--accent);z-index:2;animation:selPulse .8s ease infinite}
+@keyframes selPulse{0%,100%{box-shadow:inset 0 0 0 4px var(--accent)}50%{box-shadow:inset 0 0 0 4px var(--accent2)}}
+.cell.hint::after{content:'';position:absolute;width:30%;height:30%;background:rgba(233,69,96,.55);border-radius:50%;animation:pulse 1.2s ease-in-out infinite}
+.cell.cap::after{content:'';position:absolute;inset:8%;border:4px solid rgba(233,69,96,.75);border-radius:50%;animation:capPulse 1s ease infinite}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.3);opacity:.6}}
+@keyframes capPulse{0%,100%{transform:scale(1);opacity:.9}50%{transform:scale(1.1);opacity:.5}}
+.cell.last{box-shadow:inset 0 0 0 100px rgba(233,69,96,.18)}
+
+/* ===== BOARD THEMES (giữ nguyên + thêm) ===== */
+#board.t-classic .light{background:#f0d9b5} #board.t-classic .dark{background:#b58863}
+#board.t-green .light{background:#eeeed2} #board.t-green .dark{background:#769656}
+#board.t-blue .light{background:#dee3e6} #board.t-blue .dark{background:#8ca2ad}
+#board.t-purple .light{background:#e8dff5} #board.t-purple .dark{background:#9a7fc4}
+#board.t-dark .light{background:#6b6b6b} #board.t-dark .dark{background:#2b2b2b}
+#board.t-marble .light{background:linear-gradient(135deg,#f5f5f5,#e0e0e0)} #board.t-marble .dark{background:linear-gradient(135deg,#555,#333)}
+
+/* Devil board — đỏ đen */
+#board.t-devil .light{background:linear-gradient(135deg,#3a0a0a,#5a1010)} #board.t-devil .dark{background:linear-gradient(135deg,#1a0000,#2a0505)}
+#board.t-devil .cell{box-shadow:inset 0 0 20px rgba(233,69,96,.15)}
+
+/* Cyborg board — neon xanh */
+#board.t-cyborg .light{background:linear-gradient(135deg,#0a1a2a,#153040)} #board.t-cyborg .dark{background:linear-gradient(135deg,#051220,#0a2030)}
+#board.t-cyborg .cell{box-shadow:inset 0 0 15px rgba(0,229,255,.1)}
+
+/* King board — gold */
+#board.t-king .light{background:linear-gradient(135deg,#8b6914,#d4a017)} #board.t-king .dark{background:linear-gradient(135deg,#5a4208,#8b6914)}
+
+/* ===== PIECE STYLES — 10 kiểu khác nhau ===== */
+.piece-symbol{font-size:min(58px,7.5vw);line-height:1;display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-family:'Segoe UI Symbol','Apple Symbols','Arial Unicode MS',serif;transition:.15s}
+
+/* 1. UNICODE — ký tự chuẩn */
+.p-unicode .piece-symbol.w{color:#fff;text-shadow:0 0 2px #000,0 1px 3px #000,0 0 5px rgba(0,0,0,.5)}
+.p-unicode .piece-symbol.b{color:#111;text-shadow:0 0 2px #fff,0 0 4px rgba(255,255,255,.3)}
+
+/* 2. SOLID — đậm nét */
+.p-solid .piece-symbol.w{color:#fff;-webkit-text-stroke:2px #222;text-shadow:0 2px 4px rgba(0,0,0,.4)}
+.p-solid .piece-symbol.b{color:#222;-webkit-text-stroke:1.5px #000;text-shadow:0 2px 4px rgba(0,0,0,.3)}
+
+/* 3. OUTLINE — rỗng */
+.p-outline .piece-symbol.w{color:transparent;-webkit-text-stroke:2.5px #fff;text-shadow:0 0 3px rgba(0,0,0,.8)}
+.p-outline .piece-symbol.b{color:transparent;-webkit-text-stroke:2.5px #111;text-shadow:0 0 3px rgba(255,255,255,.4)}
+
+/* 4. NEO — cyan/hồng phát sáng */
+.p-neo .piece-symbol.w{color:#00e5ff;text-shadow:0 0 10px #00e5ff,0 0 20px rgba(0,229,255,.6),0 2px 4px #000}
+.p-neo .piece-symbol.b{color:#ff2e88;text-shadow:0 0 10px #ff2e88,0 0 20px rgba(255,46,136,.6),0 2px 4px #000}
+
+/* 5. STONE — đá xám 3D */
+.p-stone .piece-symbol.w{color:#e8e8e8;text-shadow:2px 2px 0 #999,-1px -1px 0 #fff,0 3px 6px rgba(0,0,0,.5)}
+.p-stone .piece-symbol.b{color:#444;text-shadow:2px 2px 0 #111,-1px -1px 0 #888,0 3px 6px rgba(0,0,0,.4)}
+
+/* 6. WOOD — gỗ nâu */
+.p-wood .piece-symbol.w{color:#f5e6c8;text-shadow:2px 2px 0 #8b6d47,1px 1px 0 #a88965,0 3px 5px rgba(0,0,0,.4)}
+.p-wood .piece-symbol.b{color:#5c3a1e;text-shadow:1px 1px 0 #2a1508,2px 2px 0 #000,0 3px 5px rgba(0,0,0,.3)}
+
+/* 7. GOLD — vàng gradient */
+.p-gold .piece-symbol.w{background:linear-gradient(135deg,#fff59d,#ffd700,#b8860b);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5)) drop-shadow(0 0 8px rgba(255,215,0,.4))}
+.p-gold .piece-symbol.b{background:linear-gradient(135deg,#c0c0c0,#808080,#404040);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))}
+
+/* 8. NEON — xanh/hồng neon */
+.p-neon .piece-symbol.w{color:#39ff14;text-shadow:0 0 8px #39ff14,0 0 16px #39ff14,0 0 24px rgba(57,255,20,.5)}
+.p-neon .piece-symbol.b{color:#ff073a;text-shadow:0 0 8px #ff073a,0 0 16px #ff073a,0 0 24px rgba(255,7,58,.5)}
+
+/* 9. PIXEL — 8-bit */
+.p-pixel .piece-symbol.w{color:#fff;-webkit-text-stroke:1px #000;text-shadow:3px 3px 0 #000,6px 6px 0 rgba(0,0,0,.3);font-family:'Courier New',monospace;font-weight:900}
+.p-pixel .piece-symbol.b{color:#000;-webkit-text-stroke:1px #fff;text-shadow:3px 3px 0 #fff,6px 6px 0 rgba(255,255,255,.2);font-family:'Courier New',monospace;font-weight:900}
+
+/* 10. 3D — nổi khối */
+.p-3d .piece-symbol.w{color:#fff;text-shadow:1px 1px 0 #ccc,2px 2px 0 #bbb,3px 3px 0 #aaa,4px 4px 0 #999,5px 5px 0 #888,6px 6px 8px rgba(0,0,0,.5)}
+.p-3d .piece-symbol.b{color:#333;text-shadow:1px 1px 0 #222,2px 2px 0 #111,3px 3px 0 #000,4px 4px 8px rgba(0,0,0,.6)}
+
+/* ============ SIDEBAR ============ */
+.side{display:flex;flex-direction:column;gap:14px}
+.side .panel{max-height:640px}
+#history{background:var(--bg);border-radius:9px;padding:10px;font-family:'Courier New',monospace;font-size:13px;overflow-y:auto;flex:1;min-height:200px;max-height:500px}
+#history div{padding:5px 8px;border-radius:5px;color:var(--text2);animation:slideRight .2s ease}
+@keyframes slideRight{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+#history div:nth-child(odd){background:rgba(255,255,255,.03)}
+#history div:last-child{color:var(--accent);font-weight:700;background:rgba(233,69,96,.1)}
+
+/* ============ TOAST NOTIFICATIONS ============ */
+#toasts{position:fixed;top:calc(60px + var(--safe-top));right:16px;display:flex;flex-direction:column;gap:8px;z-index:9999;pointer-events:none;max-width:calc(100vw - 32px)}
+.toast{padding:12px 18px;background:rgba(30,30,60,.95);color:#fff;border-radius:10px;font-size:13px;font-weight:600;border-left:4px solid var(--accent);box-shadow:0 8px 30px rgba(0,0,0,.6);animation:toastIn .4s cubic-bezier(0.68,-0.55,0.265,1.55);backdrop-filter:blur(10px);display:flex;align-items:center;gap:8px}
+.toast.success{border-left-color:#51cf66}
+.toast.warning{border-left-color:#ffa500}
+.toast.danger{border-left-color:#ff073a}
+.toast.gold{border-left-color:var(--gold);background:linear-gradient(135deg,rgba(40,30,10,.95),rgba(60,40,10,.95))}
+@keyframes toastIn{from{opacity:0;transform:translateX(100%) scale(.8)}to{opacity:1;transform:translateX(0) scale(1)}}
+@keyframes toastOut{to{opacity:0;transform:translateX(100%) scale(.8)}}
+
+/* ============ LOADING ============ */
+#loading{position:fixed;inset:0;background:rgba(10,10,21,.9);display:none;place-items:center;z-index:9999;flex-direction:column;gap:16px}
+#loading.on{display:grid}
+.spin{width:52px;height:52px;border:4px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:r 1s linear infinite}
+@keyframes r{to{transform:rotate(360deg)}}
+#loading-text{color:var(--accent);font-weight:700;font-size:14px}
+
+/* ============ BOT THINKING OVERLAY ============ */
+#thinking{position:fixed;bottom:16px;left:16px;padding:10px 16px;background:rgba(30,30,60,.95);border-radius:10px;color:var(--accent);font-weight:700;font-size:13px;display:none;align-items:center;gap:8px;border:1px solid var(--accent);box-shadow:0 8px 30px rgba(0,0,0,.6);backdrop-filter:blur(10px);z-index:100}
+#thinking.on{display:flex;animation:toastIn .3s ease}
+.thinking-dots{display:flex;gap:3px}
+.thinking-dots span{width:6px;height:6px;background:var(--accent);border-radius:50%;animation:bounce 1.4s ease infinite}
+.thinking-dots span:nth-child(2){animation-delay:.2s}
+.thinking-dots span:nth-child(3){animation-delay:.4s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+
+/* Game title bar */
+#game-title{flex:1;text-align:center;font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.game-actions{display:flex;gap:5px;flex-wrap:wrap}
+@media(max-width:500px){.game-actions .btn-sm{padding:7px 10px;font-size:12px}#game-title{font-size:13px}}
+</style>
+</head>
+<body>
+
+<div id="loading"><div class="spin"></div><div id="loading-text">Đang xử lý...</div></div>
+<div id="toasts"></div>
+<div id="thinking"><span>🤖 Đang nghĩ</span><div class="thinking-dots"><span></span><span></span><span></span></div></div>
+
+<!-- ========== AUTH ========== -->
+<div id="auth-screen" class="screen active">
+  <div class="auth-box">
+    <h1>♟️ Chess Master Pro</h1>
+    <p class="sub">Đăng ký bằng tên tự đặt</p>
+    <div class="tabs">
+      <button class="tab active" data-tab="login">Đăng nhập</button>
+      <button class="tab" data-tab="register">Đăng ký</button>
+    </div>
+    <form class="form active" id="form-login">
+      <label>Tên đăng nhập</label>
+      <input type="text" id="lg-name" placeholder="Tên của bạn" autocomplete="username" required>
+      <label>Mật khẩu</label>
+      <input type="password" id="lg-pass" placeholder="Mật khẩu" autocomplete="current-password" required>
+      <button type="submit" class="btn">🎯 Đăng nhập</button>
+      <p class="msg" id="lg-msg"></p>
+    </form>
+    <form class="form" id="form-register">
+      <label>Tên đăng nhập (tự đặt)</label>
+      <input type="text" id="rg-name" placeholder="vd: cao_thu_co" autocomplete="username" required>
+      <p class="hint">3-20 ký tự, chỉ chữ/số/_</p>
+      <label>Mật khẩu</label>
+      <input type="password" id="rg-pass" placeholder="Tối thiểu 6 ký tự" autocomplete="new-password" required>
+      <label>Nhập lại mật khẩu</label>
+      <input type="password" id="rg-pass2" placeholder="Nhập lại mật khẩu" autocomplete="new-password" required>
+      <button type="submit" class="btn">✨ Tạo tài khoản</button>
+      <p class="msg" id="rg-msg"></p>
+    </form>
+  </div>
+</div>
+
+<!-- ========== LOBBY ========== -->
+<div id="lobby-screen" class="screen">
+  <div class="topbar">
+    <div class="logo">♟️ Chess Master Pro</div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <span class="chip" id="user-chip">👤</span>
+      <button class="btn btn-ghost btn-sm" onclick="Auth.logout()">Đăng xuất</button>
+    </div>
+  </div>
+  <div class="grid">
+    <!-- 6 BOTS -->
+    <div class="panel" style="grid-column:span 1">
+      <h3>🤖 Đấu với Bot (6 cấp độ)</h3>
+      <!-- Waterml — yếu cho người mới -->
+      <button class="bot" onclick="Game.startBot('waterml')" style="--bot-color:#2ecc71">
+        <div class="ava" style="background:linear-gradient(135deg,#2ecc71,#1abc9c)">🍉</div>
+        <div class="info">
+          <div class="name">Waterml</div>
+          <div class="desc"><span class="elo-badge" style="background:rgba(81,207,102,.2);color:#51cf66">400 ELO</span> · Người mới</div>
+        </div>
+      </button>
+      <!-- Tài -->
+      <button class="bot" onclick="Game.startBot('tai')" style="--bot-color:#e94560">
+        <div class="ava" style="background:linear-gradient(135deg,#e94560,#ff6b8a)">🐉</div>
+        <div class="info">
+          <div class="name">Tài Cực Mạnh</div>
+          <div class="desc"><span class="elo-badge mid">1200 ELO</span> · Dễ</div>
+        </div>
+      </button>
+      <!-- Hikaru -->
+      <button class="bot" onclick="Game.startBot('hikaru')" style="--bot-color:#f39c12">
+        <div class="ava" style="background:linear-gradient(135deg,#f39c12,#e67e22)">⚡</div>
+        <div class="info">
+          <div class="name">Hikaru Nakamura</div>
+          <div class="desc"><span class="elo-badge mid">1800 ELO</span> · Trung bình</div>
+        </div>
+      </button>
+      <!-- Devil Hikaru -->
+      <button class="bot" onclick="Game.startBot('devil')" style="--bot-color:#ff073a">
+        <div class="ava">
+          <img src="https://files.catbox.moe/5o5dfo.jpg" alt="Devil Hikaru" onerror="this.style.display='none'">
+          <div class="ava-txt">😈</div>
+        </div>
+        <div class="info">
+          <div class="name">😈 Devil Hikaru</div>
+          <div class="desc"><span class="elo-badge high">3200 ELO</span> · Bàn cờ địa ngục</div>
+        </div>
+      </button>
+      <!-- Cyborg Carlsen -->
+      <button class="bot" onclick="Game.startBot('cyborg')" style="--bot-color:#00e5ff">
+        <div class="ava">
+          <img src="https://files.catbox.moe/7pevht.png" alt="Cyborg Carlsen" onerror="this.style.display='none'">
+          <div class="ava-txt">🤖</div>
+        </div>
+        <div class="info">
+          <div class="name">🤖 Cyborg Carlsen</div>
+          <div class="desc"><span class="elo-badge high">3670 ELO</span> · Bàn cờ tương lai</div>
+        </div>
+      </button>
+      <!-- King -->
+      <button class="bot" onclick="Game.startBot('king')" style="--bot-color:#ffd700">
+        <div class="ava" style="background:linear-gradient(135deg,#ffd700,#ffaa00)">👑</div>
+        <div class="info">
+          <div class="name">👑 King</div>
+          <div class="desc"><span class="elo-badge high">4000 ELO</span> · Bất khả chiến bại</div>
+        </div>
+      </button>
+    </div>
+
+    <!-- Chơi với bạn -->
+    <div class="panel">
+      <h3>👥 Chơi với bạn bè</h3>
+      <button class="btn" onclick="Online.createRoom()">➕ Tạo phòng</button>
+      <div class="row">
+        <input type="text" id="room-input" placeholder="MÃ PHÒNG" maxlength="6">
+        <button class="btn" onclick="Online.joinRoom()">Vào</button>
+      </div>
+      <p class="msg" id="room-msg"></p>
+    </div>
+
+    <!-- Giao diện -->
+    <div class="panel">
+      <h3>🎨 Giao diện</h3>
+      <label style="font-size:12px;color:var(--text2);font-weight:600">Bàn cờ</label>
+      <div class="themes" id="board-themes">
+        <button class="swatch" data-board="classic" style="background:linear-gradient(135deg,#f0d9b5 50%,#b58863 50%)" title="Cổ điển"></button>
+        <button class="swatch" data-board="green" style="background:linear-gradient(135deg,#eeeed2 50%,#769656 50%)" title="Xanh lá"></button>
+        <button class="swatch" data-board="blue" style="background:linear-gradient(135deg,#dee3e6 50%,#8ca2ad 50%)" title="Xanh dương"></button>
+        <button class="swatch" data-board="purple" style="background:linear-gradient(135deg,#e8dff5 50%,#9a7fc4 50%)" title="Tím"></button>
+        <button class="swatch" data-board="dark" style="background:linear-gradient(135deg,#6b6b6b 50%,#2b2b2b 50%)" title="Tối"></button>
+        <button class="swatch" data-board="marble" style="background:linear-gradient(135deg,#f5f5f5 50%,#555 50%)" title="Cẩm thạch"></button>
+      </div>
+      <label style="font-size:12px;color:var(--text2);font-weight:600;margin-top:8px">Quân cờ (10 kiểu)</label>
+      <div class="piece-grid" id="piece-styles">
+        <button class="piece-btn" data-piece="unicode" title="Unicode"><span class="pv">♔</span><span class="lbl">Uni</span></button>
+        <button class="piece-btn" data-piece="solid" title="Solid"><span class="pv" style="-webkit-text-stroke:1.5px #000">♔</span><span class="lbl">Sol</span></button>
+        <button class="piece-btn" data-piece="outline" title="Outline"><span class="pv" style="-webkit-text-stroke:1px #e94560;color:transparent">♔</span><span class="lbl">Out</span></button>
+        <button class="piece-btn" data-piece="neo" title="Neo"><span class="pv" style="color:#00e5ff;text-shadow:0 0 6px #00e5ff">♔</span><span class="lbl">Neo</span></button>
+        <button class="piece-btn" data-piece="stone" title="Stone"><span class="pv" style="color:#e8e8e8;text-shadow:1px 1px 0 #999">♔</span><span class="lbl">Stn</span></button>
+        <button class="piece-btn" data-piece="wood" title="Wood"><span class="pv" style="color:#f5e6c8;text-shadow:1px 1px 0 #8b6d47">♔</span><span class="lbl">Wd</span></button>
+        <button class="piece-btn" data-piece="gold" title="Gold"><span class="pv" style="background:linear-gradient(135deg,#fff59d,#ffd700,#b8860b);-webkit-background-clip:text;-webkit-text-fill-color:transparent">♔</span><span class="lbl">Gld</span></button>
+        <button class="piece-btn" data-piece="neon" title="Neon"><span class="pv" style="color:#39ff14;text-shadow:0 0 8px #39ff14">♔</span><span class="lbl">Non</span></button>
+        <button class="piece-btn" data-piece="pixel" title="Pixel"><span class="pv" style="font-family:'Courier New',monospace;font-weight:900;text-shadow:2px 2px 0 #000">♔</span><span class="lbl">Pxl</span></button>
+        <button class="piece-btn" data-piece="3d" title="3D"><span class="pv" style="text-shadow:1px 1px 0 #ccc,2px 2px 0 #bbb,3px 3px 0 #aaa">♔</span><span class="lbl">3D</span></button>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:6px">
+        <label style="font-size:12px;color:var(--text2);font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;user-select:none">
+          <input type="checkbox" id="sound-toggle" style="width:18px;height:18px;accent-color:var(--accent)" checked> 🔊 Âm thanh
+        </label>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== GAME ========== -->
+<div id="game-screen" class="screen">
+  <div class="topbar">
+    <button class="btn btn-ghost btn-sm" onclick="Game.backToLobby()">← Lobby</button>
+    <div id="game-title">Đang chơi</div>
+    <div class="game-actions">
+      <button class="btn btn-ghost btn-sm" onclick="Game.undo()">↩️</button>
+      <button class="btn btn-ghost btn-sm" onclick="Game.flip()">🔃</button>
+      <button class="btn btn-sm" onclick="Game.reset()">🔄</button>
+    </div>
+  </div>
+  <div class="game">
+    <div class="board-wrap">
+      <div id="status">Sẵn sàng</div>
+      <div id="board"></div>
+    </div>
+    <div class="side">
+      <div class="panel">
+        <h3>📜 Lịch sử</h3>
+        <div id="history"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+// ============================================================
+// FIREBASE
+// ============================================================
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import { getDatabase, ref, set, onValue, get, update, remove } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAwBgVD7rGzpqAbk_Wl6GNuqiDlMwJgOhc",
+  authDomain: "chess-b279f.firebaseapp.com",
+  databaseURL: "https://chess-b279f-default-rtdb.firebaseio.com",
+  projectId: "chess-b279f",
+  storageBucket: "chess-b279f.firebasestorage.app",
+  messagingSenderId: "885137168194",
+  appId: "1:885137168194:web:a489e27ab2a6c9a2039adb"
+};
+const fbApp = initializeApp(firebaseConfig);
+const auth = getAuth(fbApp);
+const db = getDatabase(fbApp);
+let currentUser = null;
+
+// ============================================================
+// SOUND ENGINE — MỚI, nhiều âm thanh hơn
+// ============================================================
+let audioCtx = null;
+let soundEnabled = true;
+
+function initAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function playTone(freq, duration, type = 'sine', volume = 0.15, delay = 0) {
+  if (!soundEnabled) return;
+  try {
+    initAudio();
+    const t = audioCtx.currentTime + delay;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t);
+    gain.gain.setValueAtTime(volume, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(t);
+    osc.stop(t + duration);
+  } catch(e) { console.warn('Audio error', e); }
+}
+
+const Sound = {
+  move() {
+    playTone(800, 0.06, 'sine', 0.1);
+    playTone(1200, 0.05, 'sine', 0.08, 0.02);
+  },
+  capture() {
+    playTone(300, 0.1, 'square', 0.15);
+    playTone(200, 0.15, 'square', 0.12, 0.04);
+    playTone(150, 0.2, 'sawtooth', 0.1, 0.09);
+  },
+  bigCapture() {
+    // Ăn quân lớn (Hậu/Xe)
+    playTone(400, 0.12, 'sawtooth', 0.18);
+    playTone(250, 0.18, 'square', 0.15, 0.05);
+    playTone(180, 0.25, 'sawtooth', 0.14, 0.12);
+    playTone(120, 0.3, 'triangle', 0.12, 0.2);
+  },
+  check() {
+    playTone(880, 0.1, 'triangle', 0.15);
+    playTone(1100, 0.15, 'triangle', 0.15, 0.1);
+    playTone(880, 0.2, 'triangle', 0.15, 0.22);
+  },
+  checkmate() {
+    // Âm thanh chiếu hết MỚI — kịch tính
+    playTone(1047, 0.15, 'square', 0.2, 0);
+    playTone(880, 0.15, 'square', 0.2, 0.08);
+    playTone(1047, 0.15, 'square', 0.2, 0.16);
+    playTone(1319, 0.4, 'square', 0.25, 0.26);
+    playTone(523, 0.5, 'sawtooth', 0.15, 0.3);
+    playTone(659, 0.5, 'sawtooth', 0.15, 0.35);
+    playTone(784, 0.6, 'sine', 0.2, 0.4);
+    playTone(1047, 0.8, 'sine', 0.25, 0.5);
+  },
+  win() {
+    const notes = [523, 659, 784, 1047];
+    notes.forEach((n, i) => playTone(n, 0.25, 'sine', 0.2, i * 0.13));
+  },
+  lose() {
+    const notes = [523, 440, 349, 262];
+    notes.forEach((n, i) => playTone(n, 0.3, 'triangle', 0.18, i * 0.15));
+  },
+  select() {
+    playTone(600, 0.04, 'sine', 0.06);
+  },
+  invalid() {
+    playTone(200, 0.15, 'sawtooth', 0.1);
+  },
+  notify() {
+    playTone(1200, 0.08, 'sine', 0.1);
+    playTone(1600, 0.08, 'sine', 0.1, 0.06);
+  }
+};
+
+// ============================================================
+// TOAST NOTIFICATIONS — Thông báo thông minh
+// ============================================================
+function toast(msg, type = 'info', duration = 3000) {
+  const container = document.getElementById('toasts');
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  container.appendChild(el);
+  Sound.notify();
+  setTimeout(() => {
+    el.style.animation = 'toastOut .3s ease forwards';
+    setTimeout(() => el.remove(), 300);
+  }, duration);
+}
+
+// ============================================================
+// CHESS ENGINE
+// ============================================================
+const PC = { wK:'♔',wQ:'♕',wR:'♖',wB:'♗',wN:'♘',wP:'♙',bK:'♚',bQ:'♛',bR:'♜',bB:'♝',bN:'♞',bP:'♟' };
+
+class Chess {
+  constructor(fen) { this.load(fen || 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'); }
+  load(fen) {
+    const parts = fen.split(' ');
+    this.board = Array(8).fill().map(() => Array(8).fill(null));
+    const rows = parts[0].split('/');
+    for (let r = 0; r < 8; r++) {
+      let c = 0;
+      for (const ch of rows[r]) {
+        if (/\d/.test(ch)) c += +ch;
+        else { this.board[r][c] = (ch === ch.toUpperCase() ? 'w' : 'b') + ch.toUpperCase(); c++; }
+      }
+    }
+    this.turn = parts[1];
+    this.castling = parts[2];
+    this.ep = parts[3];
+    this.history = [];
+  }
+  static sq(r, c) { return String.fromCharCode(97 + c) + (8 - r); }
+  fen() {
+    let out = '';
+    for (let r = 0; r < 8; r++) {
+      let e = 0;
+      for (let c = 0; c < 8; c++) {
+        const p = this.board[r][c];
+        if (!p) e++;
+        else { if (e) { out += e; e = 0; } out += p[0] === 'w' ? p[1] : p[1].toLowerCase(); }
+      }
+      if (e) out += e;
+      if (r < 7) out += '/';
+    }
+    return `${out} ${this.turn} ${this.castling} ${this.ep} 0 1`;
+  }
+  get(r, c) { return (r < 0 || r > 7 || c < 0 || c > 7) ? null : this.board[r][c]; }
+  movesFrom(r, c) {
+    const p = this.get(r, c); if (!p) return [];
+    const col = p[0], t = p[1], ms = [];
+    const add = (tr, tc) => {
+      if (tr < 0 || tr > 7 || tc < 0 || tc > 7) return false;
+      const x = this.get(tr, tc);
+      if (x && x[0] === col) return false;
+      ms.push({ from: [r, c], to: [tr, tc], capture: !!x });
+      return !x;
+    };
+    if (t === 'P') {
+      const d = col === 'w' ? -1 : 1, sr = col === 'w' ? 6 : 1;
+      if (!this.get(r + d, c)) { add(r + d, c); if (r === sr && !this.get(r + 2 * d, c)) add(r + 2 * d, c); }
+      for (const dc of [-1, 1]) {
+        const tr = r + d, tc = c + dc, x = this.get(tr, tc);
+        if (x && x[0] !== col) add(tr, tc);
+        if (this.ep !== '-' && Chess.sq(tr, tc) === this.ep) ms.push({ from: [r, c], to: [tr, tc], capture: true, ep: true });
+      }
+    } else if (t === 'N') {
+      for (const [dr, dc] of [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]]) add(r + dr, c + dc);
+    } else if (t === 'B') {
+      for (const [dr, dc] of [[-1,-1],[-1,1],[1,-1],[1,1]]) { let tr = r + dr, tc = c + dc; while (add(tr, tc)) { tr += dr; tc += dc; } }
+    } else if (t === 'R') {
+      for (const [dr, dc] of [[-1,0],[1,0],[0,-1],[0,1]]) { let tr = r + dr, tc = c + dc; while (add(tr, tc)) { tr += dr; tc += dc; } }
+    } else if (t === 'Q') {
+      for (const [dr, dc] of [[-1,-1],[-1,1],[1,-1],[1,1],[-1,0],[1,0],[0,-1],[0,1]]) { let tr = r + dr, tc = c + dc; while (add(tr, tc)) { tr += dr; tc += dc; } }
+    } else if (t === 'K') {
+      for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) if (dr || dc) add(r + dr, c + dc);
+    }
+    return ms;
+  }
+  attacked(r, c, by) {
+    for (const [dr, dc] of [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]]) if (this.get(r + dr, c + dc) === by + 'N') return true;
+    for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) if ((dr || dc) && this.get(r + dr, c + dc) === by + 'K') return true;
+    const pd = by === 'w' ? 1 : -1;
+    for (const dc of [-1, 1]) if (this.get(r + pd, c + dc) === by + 'P') return true;
+    for (const [dr, dc, ts] of [[-1,-1,'BQ'],[1,1,'BQ'],[-1,1,'BQ'],[1,-1,'BQ'],[-1,0,'RQ'],[1,0,'RQ'],[0,-1,'RQ'],[0,1,'RQ']]) {
+      let tr = r + dr, tc = c + dc;
+      while (tr >= 0 && tr < 8 && tc >= 0 && tc < 8) {
+        const p = this.get(tr, tc);
+        if (p) { if (p[0] === by && ts.includes(p[1])) return true; break; }
+        tr += dr; tc += dc;
+      }
+    }
+    return false;
+  }
+  king(color) {
+    for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) if (this.board[r][c] === color + 'K') return [r, c];
+    return null;
+  }
+  inCheck(color) { const k = this.king(color); return k ? this.attacked(k[0], k[1], color === 'w' ? 'b' : 'w') : false; }
+  legal(r, c) {
+    const p = this.get(r, c);
+    if (!p || p[0] !== this.turn) return [];
+    const out = [];
+    for (const m of this.movesFrom(r, c)) {
+      const g = this.clone(); g.apply(m);
+      if (!g.inCheck(this.turn)) out.push(m);
+    }
+    if (p[1] === 'K' && !this.inCheck(this.turn)) {
+      const row = this.turn === 'w' ? 7 : 0;
+      if (this.castling.includes(this.turn === 'w' ? 'K' : 'k') &&
+          !this.get(row, 5) && !this.get(row, 6) && this.get(row, 7) === this.turn + 'R' &&
+          !this.attacked(row, 5, this.turn === 'w' ? 'b' : 'w') && !this.attacked(row, 6, this.turn === 'w' ? 'b' : 'w'))
+        out.push({ from: [r, c], to: [row, 6], castle: 'K' });
+      if (this.castling.includes(this.turn === 'w' ? 'Q' : 'q') &&
+          !this.get(row, 3) && !this.get(row, 2) && !this.get(row, 1) && this.get(row, 0) === this.turn + 'R' &&
+          !this.attacked(row, 3, this.turn === 'w' ? 'b' : 'w') && !this.attacked(row, 2, this.turn === 'w' ? 'b' : 'w'))
+        out.push({ from: [r, c], to: [row, 2], castle: 'Q' });
+    }
+    return out;
+  }
+  allLegal(color) {
+    const out = [];
+    for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
+      const p = this.board[r][c];
+      if (p && p[0] === color) for (const m of this.movesFrom(r, c)) {
+        const g = this.clone(); g.apply(m);
+        if (!g.inCheck(color)) out.push(m);
+      }
+    }
+    return out;
+  }
+  clone() { const g = new Chess(this.fen()); g.history = [...this.history]; return g; }
+  apply(m) {
+    const [fr, fc] = m.from, [tr, tc] = m.to;
+    const p = this.board[fr][fc];
+    if (m.ep) this.board[fr][tc] = null;
+    if (m.castle === 'K') { this.board[tr][5] = this.board[tr][7]; this.board[tr][7] = null; }
+    if (m.castle === 'Q') { this.board[tr][3] = this.board[tr][0]; this.board[tr][0] = null; }
+    this.board[tr][tc] = p;
+    this.board[fr][fc] = null;
+    if (p[1] === 'P' && (tr === 0 || tr === 7)) this.board[tr][tc] = p[0] + 'Q';
+    let cast = this.castling;
+    if (p === 'wK') cast = cast.replace(/[KQ]/g, '');
+    if (p === 'bK') cast = cast.replace(/[kq]/g, '');
+    if ((fr === 7 && fc === 0) || (tr === 7 && tc === 0)) cast = cast.replace('Q', '');
+    if ((fr === 7 && fc === 7) || (tr === 7 && tc === 7)) cast = cast.replace('K', '');
+    if ((fr === 0 && fc === 0) || (tr === 0 && tc === 0)) cast = cast.replace('q', '');
+    if ((fr === 0 && fc === 7) || (tr === 0 && tc === 7)) cast = cast.replace('k', '');
+    if (!cast) cast = '-';
+    this.castling = cast;
+    this.ep = (p[1] === 'P' && Math.abs(tr - fr) === 2) ? Chess.sq((fr + tr) / 2, fc) : '-';
+    this.turn = this.turn === 'w' ? 'b' : 'w';
+    this.history.push(m);
+    return this;
+  }
+  makeMove(m) { this.apply(m); return this; }
+  undo() {
+    if (!this.history.length) return false;
+    const moves = this.history.slice(0, -1);
+    this.load('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+    for (const mv of moves) this.makeMove(mv);
+    return true;
+  }
+  over() {
+    if (this.allLegal(this.turn).length === 0)
+      return this.inCheck(this.turn) ? { type: 'mate', winner: this.turn === 'w' ? 'b' : 'w' } : { type: 'stale' };
+    return null;
+  }
+  pieceColor(p) { return p ? p[0] : null; }
+}
+
+// ============================================================
+// BOT ENGINE — 6 cấp độ
+// ============================================================
+const VAL = { P:100,N:320,B:330,R:500,Q:900,K:20000 };
+
+// Bảng vị trí quân — giúp bot mạnh chơi hay hơn
+const PST = {
+  P: [0,0,0,0,0,0,0,0, 50,50,50,50,50,50,50,50, 10,10,20,30,30,20,10,10,
+      5,5,10,25,25,10,5,5, 0,0,0,20,20,0,0,0, 5,-5,-10,0,0,-10,-5,5,
+      5,10,10,-20,-20,10,10,5, 0,0,0,0,0,0,0,0],
+  N: [-50,-40,-30,-30,-30,-30,-40,-50, -40,-20,0,0,0,0,-20,-40,
+      -30,0,10,15,15,10,0,-30, -30,5,15,20,20,15,5,-30,
+      -30,0,15,20,20,15,0,-30, -30,5,10,15,15,10,5,-30,
+      -40,-20,0,5,5,0,-20,-40, -50,-40,-30,-30,-30,-30,-40,-50],
+  B: [-20,-10,-10,-10,-10,-10,-10,-20, -10,0,0,0,0,0,0,-10,
+      -10,0,5,10,10,5,0,-10, -10,5,5,10,10,5,5,-10,
+      -10,0,10,10,10,10,0,-10, -10,10,10,10,10,10,10,-10,
+      -10,5,0,0,0,0,5,-10, -20,-10,-10,-10,-10,-10,-10,-20],
+  R: [0,0,0,0,0,0,0,0, 5,10,10,10,10,10,10,5, -5,0,0,0,0,0,0,-5,
+      -5,0,0,0,0,0,0,-5, -5,0,0,0,0,0,0,-5, -5,0,0,0,0,0,0,-5,
+      -5,0,0,0,0,0,0,-5, 0,0,0,5,5,0,0,0],
+  Q: [-20,-10,-10,-5,-5,-10,-10,-20, -10,0,0,0,0,0,0,-10,
+      -10,0,5,5,5,5,0,-10, -5,0,5,5,5,5,0,-5, 0,0,5,5,5,5,0,-5,
+      -10,5,5,5,5,5,0,-10, -10,0,5,0,0,0,0,-10, -20,-10,-10,-5,-5,-10,-10,-20],
+  K: [-30,-40,-40,-50,-50,-40,-40,-30, -30,-40,-40,-50,-50,-40,-40,-30,
+      -30,-40,-40,-50,-50,-40,-40,-30, -30,-40,-40,-50,-50,-40,-40,-30,
+      -20,-30,-30,-40,-40,-30,-30,-20, -10,-20,-20,-20,-20,-20,-20,-10,
+      20,20,0,0,0,0,20,20, 20,30,10,0,0,10,30,20]
+};
+
+function evaluate(g) {
+  let s = 0;
+  for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
+    const p = g.board[r][c]; if (!p) continue;
+    let v = VAL[p[1]];
+    if (PST[p[1]]) {
+      const idx = p[0] === 'w' ? r * 8 + c : (7 - r) * 8 + c;
+      v += PST[p[1]][idx];
+    }
+    s += p[0] === 'w' ? v : -v;
+  }
+  return g.turn === 'w' ? s : -s;
+}
+
+// Negamax with alpha-beta + transposition + iterative deepening
+function negamax(g, d, a, b, deadline) {
+  if (Date.now() > deadline) return evaluate(g);
+  const o = g.over();
+  if (o) return o.type === 'mate' ? -100000 + (10 - d) * 1000 : 0;
+  if (d === 0) return evaluate(g);
+  const ms = g.allLegal(g.turn).sort((x, y) => {
+    const xv = x.capture ? VAL[g.get(x.to[0], x.to[1])?.[1] || 'P'] : 0;
+    const yv = y.capture ? VAL[g.get(y.to[0], y.to[1])?.[1] || 'P'] : 0;
+    return yv - xv;
+  });
+  let best = -Infinity;
+  for (const m of ms) {
+    const g2 = g.clone(); g2.apply(m);
+    const sc = -negamax(g2, d - 1, -b, -a, deadline);
+    if (sc > best) best = sc;
+    if (best > a) a = best;
+    if (a >= b) break;
+  }
+  return best;
+}
+
+// Bot config — mỗi bot có depth + thời gian suy nghĩ + randomness
+const BOT_CONFIG = {
+  waterml: { depth: 1, timeLimit: 100, randomness: 0.9, name: '🍉 Waterml', elo: 400 },
+  tai: { depth: 2, timeLimit: 300, randomness: 0.4, name: '🐉 Tài Cực Mạnh', elo: 1200 },
+  hikaru: { depth: 3, timeLimit: 600, randomness: 0.15, name: '⚡ Hikaru', elo: 1800 },
+  devil: { depth: 4, timeLimit: 1200, randomness: 0.02, name: '😈 Devil Hikaru', elo: 3200 },
+  cyborg: { depth: 5, timeLimit: 2000, randomness: 0, name: '🤖 Cyborg Carlsen', elo: 3670 },
+  king: { depth: 6, timeLimit: 3000, randomness: 0, name: '👑 King', elo: 4000 }
+};
+
+function botMove(g, level) {
+  const cfg = BOT_CONFIG[level] || BOT_CONFIG.tai;
+  const ms = g.allLegal(g.turn);
+  if (!ms.length) return null;
+  // Randomness — bot yếu chọn ngẫu nhiên
+  if (Math.random() < cfg.randomness) {
+    return ms[Math.floor(Math.random() * ms.length)];
+  }
+  const deadline = Date.now() + cfg.timeLimit;
+  let best = -Infinity, bestMs = [];
+  for (const m of ms.sort((x, y) => (y.capture ? 1 : 0) - (x.capture ? 1 : 0))) {
+    const g2 = g.clone(); g2.apply(m);
+    const sc = -negamax(g2, cfg.depth - 1, -Infinity, Infinity, deadline);
+    if (sc > best) { best = sc; bestMs = [m]; }
+    else if (sc === best) bestMs.push(m);
+  }
+  return bestMs[Math.floor(Math.random() * bestMs.length)];
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+const $ = id => document.getElementById(id);
+function switchScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $(name + '-screen').classList.add('active');
+}
+function nameToEmail(name) { return name.toLowerCase().replace(/[^a-z0-9_]/g, '') + '@chess.local'; }
+
+// ============================================================
+// AUTH
+// ============================================================
+window.Auth = {
+  async register() {
+    const name = $('rg-name').value.trim();
+    const pass = $('rg-pass').value;
+    const pass2 = $('rg-pass2').value;
+    const msg = $('rg-msg');
+    msg.className = 'msg'; msg.textContent = '';
+    if (!/^[a-zA-Z0-9_]{3,20}$/.test(name)) { msg.textContent = '❌ Tên 3-20 ký tự chữ/số/_'; msg.className = 'msg'; return; }
+    if (pass.length < 6) { msg.textContent = '❌ Mật khẩu ≥ 6 ký tự'; msg.className = 'msg'; return; }
+    if (pass !== pass2) { msg.textContent = '❌ Mật khẩu không khớp'; msg.className = 'msg'; return; }
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, nameToEmail(name), pass);
+      await updateProfile(cred.user, { displayName: name });
+      msg.textContent = '✅ Đăng ký thành công!'; msg.className = 'msg ok';
+      toast('Chào mừng ' + name + '! 🎉', 'success');
+    } catch (e) {
+      console.error(e);
+      if (e.code === 'auth/email-already-in-use') msg.textContent = '❌ Tên đã có người dùng';
+      else if (e.code === 'auth/weak-password') msg.textContent = '❌ Mật khẩu yếu';
+      else msg.textContent = '❌ ' + (e.code || e.message);
+    }
+  },
+  async login() {
+    const name = $('lg-name').value.trim();
+    const pass = $('lg-pass').value;
+    const msg = $('lg-msg');
+    msg.className = 'msg'; msg.textContent = '';
+    if (!name || !pass) { msg.textContent = '❌ Nhập đủ tên & mật khẩu'; msg.className = 'msg'; return; }
+    try {
+      await signInWithEmailAndPassword(auth, nameToEmail(name), pass);
+      initAudio();
+    } catch (e) {
+      msg.textContent = '❌ Sai tên hoặc mật khẩu';
+    }
+  },
+  async logout() { await signOut(auth); }
+};
+
+$('form-login').addEventListener('submit', e => { e.preventDefault(); Auth.login(); });
+$('form-register').addEventListener('submit', e => { e.preventDefault(); Auth.register(); });
+document.querySelectorAll('.tab').forEach(t => {
+  t.onclick = () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.form').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    $('form-' + t.dataset.tab).classList.add('active');
+  };
+});
+
+onAuthStateChanged(auth, u => {
+  currentUser = u;
+  if (u) {
+    $('user-chip').textContent = '👤 ' + (u.displayName || 'Player');
+    switchScreen('lobby');
+    Theme.apply();
+    toast('Chào ' + (u.displayName || 'bạn') + '! 👋', 'info');
+  } else {
+    switchScreen('auth');
+  }
+});
+
+// ============================================================
+// THEME
+// ============================================================
+const savedTheme = JSON.parse(localStorage.getItem('chess-theme') || '{}');
+window.Theme = {
+  board: savedTheme.board || 'classic',
+  piece: savedTheme.piece || 'unicode',
+  setBoard(v) { this.board = v; this.save(); this.apply(); },
+  setPiece(v) { this.piece = v; this.save(); this.apply(); Sound.select(); },
+  save() { localStorage.setItem('chess-theme', JSON.stringify({ board: this.board, piece: this.piece })); },
+  apply() {
+    const b = $('board');
+    if (b && !b.classList.contains('efeito-devil') && !b.classList.contains('efeito-cyborg')) {
+      b.className = `t-${this.board} p-${this.piece}`;
+    } else if (b) {
+      // Giữ effect nhưng đổi piece class
+      b.className = b.className.replace(/p-\w+/g, '').trim() + ` p-${this.piece}`;
+    }
+    document.querySelectorAll('.swatch').forEach(s => s.classList.toggle('active', s.dataset.board === this.board));
+    document.querySelectorAll('.piece-btn').forEach(s => s.classList.toggle('active', s.dataset.piece === this.piece));
+  }
+};
+document.querySelectorAll('.swatch').forEach(s => s.onclick = () => Theme.setBoard(s.dataset.board));
+document.querySelectorAll('.piece-btn').forEach(s => s.onclick = () => Theme.setPiece(s.dataset.piece));
+
+$('sound-toggle').addEventListener('change', e => {
+  soundEnabled = e.target.checked;
+  localStorage.setItem('chess-sound', soundEnabled ? '1' : '0');
+  if (soundEnabled) { initAudio(); Sound.select(); }
+});
+if (localStorage.getItem('chess-sound') === '0') {
+  soundEnabled = false;
+  $('sound-toggle').checked = false;
+}
+
+// ============================================================
+// GAME
+// ============================================================
+let game = null, flipped = false, selected = null, legal = [];
+let mode = 'bot', botLevel = 'tai', myColor = 'w', roomCode = null, lastMove = null;
+let currentBotBoard = null; // 'devil', 'cyborg', 'king', null
+
+window.Game = {
+  startBot(level) {
+    initAudio();
+    mode = 'bot'; botLevel = level; myColor = 'w';
+    game = new Chess(); lastMove = null; selected = null; legal = []; flipped = false;
+    currentBotBoard = ['devil','cyborg','king'].includes(level) ? level : null;
+    const cfg = BOT_CONFIG[level];
+    $('game-title').textContent = `Bạn (Trắng) vs ${cfg.name} (${cfg.elo} ELO)`;
+    switchScreen('game');
+    this.render();
+    // Thông báo thông minh
+    const msgs = {
+      waterml: '🍉 Waterml — bot tập sự, hoàn hảo cho người mới!',
+      tai: '🐉 Tài Cực Mạnh — bot cấp 1, thử thách nhẹ nhàng.',
+      hikaru: '⚡ Hikaru — bot cấp 2, khó hơn chút đấy!',
+      devil: '😈 Devil Hikaru — 3200 ELO! Bàn cờ địa ngục! Chuẩn bị tinh thần!',
+      cyborg: '🤖 Cyborg Carlsen — 3670 ELO! Bàn cờ tương lai! Siêu máy tính!',
+      king: '👑 King — 4000 ELO! Bất khả chiến bại! Cố lên!'
+    };
+    toast(msgs[level], level === 'devil' || level === 'cyborg' || level === 'king' ? 'danger' : 'info', 4000);
+  },
+  startOnline(code, color) {
+    initAudio();
+    mode = 'online'; roomCode = code; myColor = color; currentBotBoard = null;
+    $('game-title').textContent = `Phòng ${code} · ${color === 'w' ? 'Trắng' : 'Đen'}`;
+    switchScreen('game'); this.render();
+  },
+  backToLobby() {
+    if (roomCode) { remove(ref(db, 'rooms/' + roomCode)).catch(() => {}); roomCode = null; }
+    currentBotBoard = null;
+    switchScreen('lobby');
+  },
+  reset() { if (mode === 'bot') return this.startBot(botLevel); if (roomCode) return Online.resetRoom(); },
+  flip() { flipped = !flipped; this.render(); },
+  undo() {
+    if (mode === 'bot' && game.history.length >= 2) {
+      game.undo(); game.undo();
+      lastMove = game.history[game.history.length - 1] || null;
+      this.render();
+      toast('↩️ Đã hoàn tác 1 nước', 'info', 1500);
+    }
+  },
+  render() {
+    const b = $('board');
+    if (!b || !game) return;
+    // Board class — kết hợp effect + theme + piece
+    let cls = `t-${Theme.board} p-${Theme.piece}`;
+    if (currentBotBoard === 'devil') { cls = `t-devil p-${Theme.piece} efeito-devil`; }
+    else if (currentBotBoard === 'cyborg') { cls = `t-cyborg p-${Theme.piece} efeito-cyborg`; }
+    else if (currentBotBoard === 'king') { cls = `t-king p-${Theme.piece}`; }
+    b.className = cls;
+    b.innerHTML = '';
+    const rows = flipped ? [7,6,5,4,3,2,1,0] : [0,1,2,3,4,5,6,7];
+    const cols = flipped ? [7,6,5,4,3,2,1,0] : [0,1,2,3,4,5,6,7];
+    for (const r of rows) for (const c of cols) {
+      const cell = document.createElement('div');
+      cell.className = `cell ${(r + c) % 2 === 0 ? 'light' : 'dark'}`;
+      const p = game.get(r, c);
+      if (p) {
+        const span = document.createElement('span');
+        span.className = `piece-symbol ${p[0]}`;
+        span.textContent = PC[p];
+        cell.appendChild(span);
+      }
+      if (lastMove && ((lastMove.from[0] === r && lastMove.from[1] === c) || (lastMove.to[0] === r && lastMove.to[1] === c))) cell.classList.add('last');
+      if (selected && selected[0] === r && selected[1] === c) cell.classList.add('sel');
+      const h = legal.find(m => m.to[0] === r && m.to[1] === c);
+      if (h) cell.classList.add(h.capture ? 'cap' : 'hint');
+      cell.onclick = () => this.click(r, c);
+      b.appendChild(cell);
+    }
+    this.status(); this.history();
+  },
+  click(r, c) {
+    if (!game) return;
+    initAudio();
+    if (mode === 'bot' && game.turn !== myColor) return;
+    if (mode === 'online' && game.turn !== myColor) return;
+    const mv = legal.find(m => m.to[0] === r && m.to[1] === c);
+    if (mv) return this.play(mv);
+    const p = game.get(r, c);
+    if (p && p[0] === game.turn) {
+      selected = [r, c]; legal = game.legal(r, c);
+      Sound.select();
+    } else { selected = null; legal = []; }
+    this.render();
+  },
+  play(mv) {
+    lastMove = mv;
+    if (mode === 'bot') {
+      const capturedPiece = mv.capture ? game.get(mv.to[0], mv.to[1]) : null;
+      game.makeMove(mv);
+      this.playSound(mv, capturedPiece);
+      selected = null; legal = []; this.render();
+      const o = game.over(); if (o) return this.result(o);
+      if (game.inCheck(game.turn)) { setTimeout(() => Sound.check(), 100); toast('⚠️ Chiếu tướng!', 'warning', 2000); }
+      // Bot thinking
+      $('thinking').classList.add('on');
+      $('thinking').querySelector('span').textContent = BOT_CONFIG[botLevel].name + ' đang nghĩ';
+      setTimeout(() => {
+        const bm = botMove(game, botLevel);
+        $('thinking').classList.remove('on');
+        if (bm) {
+          const cap2 = bm.capture ? game.get(bm.to[0], bm.to[1]) : null;
+          game.makeMove(bm);
+          this.playSound(bm, cap2);
+          lastMove = bm; this.render();
+          const o2 = game.over(); if (o2) return this.result(o2);
+          if (game.inCheck(game.turn)) { setTimeout(() => Sound.check(), 100); toast('⚠️ Bạn đang bị chiếu!', 'danger', 2500); }
+        }
+      }, 250 + Math.random() * 400);
+    } else if (mode === 'online') {
+      const cap = mv.capture ? game.get(mv.to[0], mv.to[1]) : null;
+      game.makeMove(mv);
+      this.playSound(mv, cap);
+      selected = null; legal = []; this.render();
+      update(ref(db, 'rooms/' + roomCode + '/game'), { fen: game.fen(), lastMove: mv, ts: Date.now() });
+    }
+  },
+  playSound(mv, capturedPiece) {
+    if (mv.capture) {
+      if (capturedPiece && (capturedPiece[1] === 'Q' || capturedPiece[1] === 'R')) {
+        Sound.bigCapture();
+        toast('💥 Ăn quân lớn!', 'warning', 1500);
+      } else {
+        Sound.capture();
+      }
+    } else {
+      Sound.move();
+    }
+  },
+  result(o) {
+    const el = $('status');
+    if (o.type === 'mate') {
+      el.textContent = `♛ Chiếu hết! ${o.winner === 'w' ? 'Trắng' : 'Đen'} thắng`;
+      Sound.checkmate();
+      const playerWon = (mode === 'bot' && o.winner === 'w') || (mode === 'online' && o.winner === myColor);
+      toast(playerWon ? '🎉 Bạn thắng rồi! Tuyệt vời!' : '😢 Bạn thua rồi! Thử lại nhé!', playerWon ? 'success' : 'danger', 5000);
+    } else if (o.type === 'stale') {
+      el.textContent = '🤝 Hòa (hết nước)';
+      toast('🤝 Hòa cờ!', 'info', 3000);
+    }
+  },
+  status() {
+    const el = $('status'); if (!game) return;
+    const o = game.over(); if (o) return this.result(o);
+    if (mode === 'bot') el.textContent = game.turn === 'w' ? '🎯 Lượt của bạn' : '🤖 ' + BOT_CONFIG[botLevel].name + ' đang nghĩ...';
+    else el.textContent = game.turn === myColor ? '🎯 Lượt của bạn' : '⏳ Chờ đối thủ...';
+  },
+  history() {
+    const h = $('history'); if (!h) return;
+    h.innerHTML = '';
+    game.history.forEach((m, i) => {
+      const d = document.createElement('div');
+      d.textContent = `${i + 1}. ${Chess.sq(m.from[0], m.from[1])}${Chess.sq(m.to[0], m.to[1])}${m.capture ? 'x' : ''}`;
+      h.appendChild(d);
+    });
+    h.scrollTop = h.scrollHeight;
+  }
+};
+
+// ============================================================
+// ONLINE
+// ============================================================
+window.Online = {
+  async createRoom() {
+    if (!currentUser) return;
+    initAudio();
+    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+    await set(ref(db, 'rooms/' + code), {
+      host: currentUser.uid,
+      hostName: currentUser.displayName || 'Host',
+      guest: null,
+      game: { fen: new Chess().fen(), lastMove: null, ts: Date.now() },
+      createdAt: Date.now()
+    });
+    roomCode = code;
+    Game.startOnline(code, 'w');
+    this.listen(code);
+    $('game-title').textContent = `Phòng ${code} · Chờ đối thủ...`;
+    toast('📋 Mã phòng: ' + code + ' — Gửi cho bạn bè!', 'gold', 8000);
+  },
+  async joinRoom() {
+    const code = $('room-input').value.trim().toUpperCase();
+    const msg = $('room-msg'); msg.className = 'msg'; msg.textContent = '';
+    if (!code) { msg.textContent = '❌ Nhập mã'; return; }
+    try {
+      const snap = await get(ref(db, 'rooms/' + code));
+      if (!snap.exists()) { msg.textContent = '❌ Phòng không tồn tại'; return; }
+      const d = snap.val();
+      if (d.host === currentUser.uid) { msg.textContent = '⚠️ Bạn là chủ phòng'; return; }
+      if (d.guest && d.guest !== currentUser.uid) { msg.textContent = '❌ Phòng đầy'; return; }
+      await update(ref(db, 'rooms/' + code), { guest: currentUser.uid, guestName: currentUser.displayName || 'Guest' });
+      roomCode = code;
+      Game.startOnline(code, 'b');
+      this.listen(code);
+      toast('✅ Đã vào phòng ' + code, 'success');
+    } catch (e) { msg.textContent = '❌ ' + e.message; }
+  },
+  listen(code) {
+    let lastFen = null;
+    onValue(ref(db, 'rooms/' + code), snap => {
+      if (!snap.exists() || !game) return;
+      const d = snap.val();
+      if (d.game && d.game.fen !== game.fen() && d.game.fen !== lastFen) {
+        lastFen = d.game.fen;
+        game.load(d.game.fen);
+        if (d.game.lastMove) {
+          lastMove = d.game.lastMove;
+          Game.playSound(lastMove, null);
+        }
+        Game.render();
+      }
+      if (d.guest && $('game-title').textContent.includes('Chờ')) {
+        $('game-title').textContent = `Phòng ${code} · Đang chơi`;
+        toast('👥 Đối thủ đã vào! Bắt đầu chơi!', 'success', 3000);
+      }
+    });
+  },
+  async resetRoom() {
+    if (!roomCode) return;
+    await update(ref(db, 'rooms/' + roomCode + '/game'), { fen: new Chess().fen(), lastMove: null });
+    game = new Chess(); lastMove = null; selected = null; legal = [];
+    Game.render();
+  }
+};
+
+// Init
+Theme.apply();
+console.log('%c✅ Chess Master Pro loaded — 6 bots', 'color:#51cf66;font-weight:bold;font-size:14px');
+</script>
+</body>
+</html>
